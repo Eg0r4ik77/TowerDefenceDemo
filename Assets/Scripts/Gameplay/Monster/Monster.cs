@@ -30,6 +30,7 @@ namespace Gameplay.Monster
 
 		public Vector3 Forward => transform.forward;
 		public float Speed => _speed;
+		public bool IsDead => _currentHealth.Value <= 0;
 		public Observable<Unit> Released => _died;
 		public ReadOnlyReactiveProperty<float> CurrentHealth => _currentHealth;
 		

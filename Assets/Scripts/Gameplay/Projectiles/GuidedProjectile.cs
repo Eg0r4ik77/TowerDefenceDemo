@@ -16,7 +16,7 @@ namespace Gameplay.Projectiles
 		{
 			var direction = transform.forward;
 			
-			if (!ReferenceEquals(_target, null))
+			if (!_target.IsDead)
 			{
 				direction = (_target.Position - transform.position).normalized;
 				transform.LookAt(_target.Position);
