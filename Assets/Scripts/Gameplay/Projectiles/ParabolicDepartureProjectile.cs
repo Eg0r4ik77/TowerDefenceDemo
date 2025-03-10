@@ -1,43 +1,40 @@
-﻿using UnityEngine;
+﻿using Gameplay.Attack;
+using UnityEngine;
 
 namespace Gameplay.Projectiles
 {
 	public class ParabolicDepartureProjectile : Projectile
 	{
 		private Vector3 _startPosition;
-		private float _distanceBeforeDeparture;
 		private Vector3 _velocity;
+		private float _distanceBeforeDeparture;
 		
 		public void Initialize(float angle, float distanceBeforeDeparture)
 		{
 			_startPosition = transform.position;
 			
-			_distanceBeforeDeparture = distanceBeforeDeparture;
+			rigidbody.velocity = (transform.forward * Mathf.Sin(angle) - transform.up * Mathf.Cos(angle)) * StartSpeed;
 			
-			_velocity = (transform.forward * Mathf.Sin(angle * Mathf.Deg2Rad) -
-			             transform.up * Mathf.Cos(angle * Mathf.Deg2Rad)) * Speed;
+			_distanceBeforeDeparture = distanceBeforeDeparture;
 		}
 		
 		protected override void Translate()
 		{
-			if (Vector3.Distance(transform.position, _startPosition) <= _distanceBeforeDeparture)
-			{
+			if (Vector3.Distance(transform.position, _startPosition) < _distanceBeforeDeparture)
 				TranslateLinearly();
-				return;
-			}
-		
-			TranslateParabolic();
+			else
+				TranslateParabolic();
 		}
 		
 		private void TranslateLinearly()
 		{
-			transform.position += transform.forward * (Speed * Time.fixedDeltaTime);
+			rigidbody.MovePosition(rigidbody.position + transform.forward * (Speed * Time.fixedDeltaTime));
 		}
-		
+		 
 		private void TranslateParabolic()
 		{
-			_velocity.y += Physics.gravity.y * Time.fixedDeltaTime;
-			transform.position += _velocity * Time.fixedDeltaTime;
+			rigidbody.velocity += rigidbody.transform.up * (ParabolicPredictionAttack.GravityAcceleration * Time.fixedDeltaTime);
+			rigidbody.MovePosition(rigidbody.position + _velocity * Time.fixedDeltaTime);
 		}
 	}
 }

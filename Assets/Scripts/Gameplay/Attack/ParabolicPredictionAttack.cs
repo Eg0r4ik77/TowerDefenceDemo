@@ -5,26 +5,32 @@ namespace Gameplay.Attack
 {
    public class ParabolicPredictionAttack : ProjectileAttack<ParabolicDepartureProjectile>
     {
+        struct Prediction
+        {
+            public Vector3 Position;
+            public float Angle;
+        }
+        
+        public const float GravityAcceleration = -9.81f;
+        private const float MinAngleDifference = 1f;
+        
         private readonly float _rotationSpeed;
-        private readonly float _minimumAngleDifference;
         private readonly float _distanceBeforeDeparture;
         private readonly Transform _towerTransform;
         private readonly Transform _departurePoint;
         
-        private Vector3? _predictedPosition;
+        private Prediction? _prediction;
 
         public ParabolicPredictionAttack(ParabolicDepartureProjectile projectilePrefab,
             Pose shootingPose,
             Transform projectilesRoot,
             int maxProjectilesCount,
-            float rotationSpeed,
-            float minimumAngleDifference, 
+            float rotationSpeed, 
             Transform towerTransform,
             Transform departurePoint) 
             : base(projectilePrefab, shootingPose, projectilesRoot, maxProjectilesCount)
         {
-            _rotationSpeed = rotationSpeed;
-            _minimumAngleDifference = minimumAngleDifference;
+            _rotationSpeed = rotationSpeed; ;
             _towerTransform = towerTransform;
             _departurePoint = departurePoint;
             _distanceBeforeDeparture = (_departurePoint.position - shootingPose.position).magnitude;
@@ -35,57 +41,80 @@ namespace Gameplay.Attack
             if (!base.ReadyToAttack())
                 return false;
             
-            _predictedPosition = CalculatePredictedPosition();
-            
-             var adjustedPredictedPosition = _predictedPosition.Value;
-             adjustedPredictedPosition.y = _departurePoint.position.y;
-            
-             var angleBetweenCannonAndTarget =
-                 Vector3.Angle(adjustedPredictedPosition - _departurePoint.position, _departurePoint.position - shootingPose.position);
+            _prediction = CalculatePredictedPosition();
 
-             RotateTo(_predictedPosition.Value);
+            if (_prediction == null)
+                return false;
+            
+            var adjustedPredictedPosition = _prediction.Value.Position;
+            adjustedPredictedPosition.y = _departurePoint.position.y;
+            
+            var angleBetweenCannonAndTarget =
+                Vector3.Angle(adjustedPredictedPosition - _departurePoint.position, _departurePoint.forward);
+            
              
 #if UNITY_EDITOR
-             Debug.DrawLine(shootingPose.position, adjustedPredictedPosition, Color.red);
-             Debug.DrawRay(shootingPose.position, (_departurePoint.position - shootingPose.position).normalized * 10,
-                 Color.green);
+            Debug.DrawLine(_departurePoint.position, adjustedPredictedPosition, Color.red);
+            Debug.DrawRay(_departurePoint.position, _departurePoint.forward * 10);
 #endif
-             return angleBetweenCannonAndTarget < _minimumAngleDifference;
+
+            RotateTo(_prediction.Value.Position);
+            
+            return angleBetweenCannonAndTarget < MinAngleDifference;
         }
 
         protected override void InitializeProjectile(ParabolicDepartureProjectile projectile)
         {
             base.InitializeProjectile(projectile);
-
-            var shootingAngle = Vector3.Angle(-shootingPose.up, _predictedPosition.Value - shootingPose.position);
             
             projectile.transform.rotation = _departurePoint.rotation;
-            projectile.Initialize(shootingAngle, _distanceBeforeDeparture);
+            projectile.Initialize(_prediction.Value.Angle, _distanceBeforeDeparture);
         }
         
-        private Vector3 CalculatePredictedPosition()
+        private Prediction? CalculatePredictedPosition()
         {
-            var g = Physics.gravity.y;
-			     
+            const float predictionSegment = 2f;
+            const float predictionStep = 0.1f;
+            
             var projectileSpeed = projectilePrefab.StartSpeed;
             var targetSpeed = target.Speed;
-        
-            var deltaY = _departurePoint.position.y - target.Position.y;
-            var deltaX = _departurePoint.position.x - target.Position.x;
-        
-            var shootingAngle = Vector3.Angle(-shootingPose.up, target.Position - _departurePoint.position);
-        
-            var sin = Mathf.Sin(shootingAngle * Mathf.Deg2Rad);
-            var cos = Mathf.Cos(shootingAngle * Mathf.Deg2Rad);
-        
-            var flightTime = deltaY / (projectileSpeed * cos + g * deltaX / (2 * (targetSpeed - projectileSpeed * sin)));
-			     
+            
             var projectileDepartureTime = _distanceBeforeDeparture / projectileSpeed;
-            flightTime += projectileDepartureTime;
-			     
-            var predictedPosition = target.Position + target.Forward * (target.Speed * flightTime);
-        
-            return predictedPosition;
+            
+            for (float step = 0; step <= predictionSegment; step += predictionStep)
+            {
+                var nextTargetPosition = target.Position + step * target.Forward;
+                
+                var nextDeparturePosition = nextTargetPosition;
+                nextDeparturePosition.y = shootingPose.position.y;
+                
+                var nextDepartureDirection = (nextDeparturePosition - shootingPose.position).normalized;
+                nextDeparturePosition = shootingPose.position + nextDepartureDirection * _distanceBeforeDeparture;
+                
+                var time = step / targetSpeed - projectileDepartureTime;
+                var xozTranslation = new Vector3(nextTargetPosition.x - nextDeparturePosition.x, 0, nextTargetPosition.z - nextDeparturePosition.z);
+                
+                var sin =  (xozTranslation.magnitude) / (projectileSpeed * time);
+                var cos = (nextDeparturePosition.y - nextTargetPosition.y + GravityAcceleration * time * time / 2) 
+                          / (projectileSpeed * time);
+                
+                if (sin >= 0 && sin <= 1f && cos >= 0 && cos <= 1f)
+                {
+                    var angle = cos == 0
+                        ? Mathf.PI / 2
+                        : Mathf.Atan(sin / cos);
+                    
+                    var prediction = new Prediction
+                    {
+                        Position = nextTargetPosition,
+                        Angle = angle
+                    };
+                    
+                    return prediction;
+                }
+            }
+
+            return null;
         }
         
         private void RotateTo(Vector3 position)

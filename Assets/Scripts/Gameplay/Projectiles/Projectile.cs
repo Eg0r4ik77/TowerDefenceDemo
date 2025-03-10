@@ -5,9 +5,12 @@ using UnityEngine;
 
 namespace Gameplay.Projectiles
 {
+    [RequireComponent(typeof(Rigidbody))]
     public abstract class Projectile : MonoBehaviour, IPoolObject
     {
         [SerializeField] private ProjectileData _data;
+        
+        protected Rigidbody rigidbody;
         
         private int _damage;
         private float _lifeTime;
@@ -21,19 +24,19 @@ namespace Gameplay.Projectiles
         public Observable<Unit> Released => _destroyed;
 
         protected abstract void Translate();
-        
-        public void Reset()
-        {
-            _spawnTime = Time.time;
-        }
 
         private void Awake()
+        {
+            rigidbody = GetComponent<Rigidbody>();
+        }
+
+        private void Start()
         {
             _damage = _data.Damage;
             _lifeTime = _data.LifeTime;
             _speed = _data.Speed;
         }
-
+        
         private void Update()
         {
             CheckProjectileLifetime();
@@ -65,6 +68,11 @@ namespace Gameplay.Projectiles
                 return;
 			
             Destroy();
+        }
+        
+        public void Reset()
+        {
+            _spawnTime = Time.time;
         }
         
         private void Destroy()

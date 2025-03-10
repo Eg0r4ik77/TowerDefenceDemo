@@ -21,10 +21,8 @@ namespace Gameplay.Projectiles
 				direction = (_target.Position - transform.position).normalized;
 				transform.LookAt(_target.Position);
 			}
-		
-			var translation = direction * (Speed * Time.fixedDeltaTime);
-		
-			transform.Translate (translation, Space.World);
+			
+			rigidbody.MovePosition(rigidbody.position + direction * (Speed * Time.fixedDeltaTime));
 		}
 	}
 }

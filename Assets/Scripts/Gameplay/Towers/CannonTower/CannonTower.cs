@@ -22,7 +22,6 @@ namespace Gameplay.Towers.CannonTower
 				transform,
 				cannonTowerData.MaxProjectilesCountInPool,
 				cannonTowerData.RotationSpeed,
-				cannonTowerData.MinimumAngleDifference,
 				transform,
 				_projectileDeparturePoint);
 		}

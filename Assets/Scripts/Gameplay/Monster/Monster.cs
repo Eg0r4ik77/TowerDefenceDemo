@@ -5,6 +5,7 @@ using VContainer;
 
 namespace Gameplay.Monster
 {
+	[RequireComponent(typeof(Rigidbody))]
 	public class Monster : MonoBehaviour, ITarget, IPoolObject
 	{
 		[SerializeField] private MonsterData _data;
@@ -18,6 +19,8 @@ namespace Gameplay.Monster
 		private readonly Subject<Unit> _died = new();
 		
 		private ITargetsContainer _targetsContext;
+		
+		private Rigidbody _rigidbody;
 		
 		private Transform[] _routePoints;
 		private int _currentWayPointIndex;
@@ -47,7 +50,12 @@ namespace Gameplay.Monster
 			_currentHealth.Value = _maxHealth;
 			_reachDistance = _data.ReachDistance;
 		}
-		
+
+		private void Awake()
+		{
+			_rigidbody = GetComponent<Rigidbody>();
+		}
+
 		private void Start()
 		{
 			Initialize();
@@ -98,7 +106,7 @@ namespace Gameplay.Monster
 
 			var direction = (point.position - _bottomPoint.position).normalized;
 
-			transform.position += direction * (_speed * Time.fixedDeltaTime);
+			_rigidbody.MovePosition(_rigidbody.position + direction * (_speed * Time.fixedDeltaTime));
 		}
 
 		private void Die()
