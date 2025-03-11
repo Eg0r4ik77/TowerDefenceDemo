@@ -12,9 +12,7 @@ namespace Gameplay.Projectiles
 		public void Initialize(float angle, float distanceBeforeDeparture)
 		{
 			_startPosition = transform.position;
-			
-			rigidbody.velocity = (transform.forward * Mathf.Sin(angle) - transform.up * Mathf.Cos(angle)) * Speed;
-			
+			_velocity = (transform.forward * Mathf.Sin(angle) - transform.up * Mathf.Cos(angle)) * Speed;
 			_distanceBeforeDeparture = distanceBeforeDeparture;
 		}
 		
@@ -33,7 +31,7 @@ namespace Gameplay.Projectiles
 		 
 		private void TranslateParabolic()
 		{
-			rigidbody.velocity += rigidbody.transform.up * (ParabolicPredictionAttack.GravityAcceleration * Time.fixedDeltaTime);
+			_velocity += rigidbody.transform.up * (ParabolicPredictionAttack.GravityAcceleration * Time.fixedDeltaTime);
 			rigidbody.MovePosition(rigidbody.position + _velocity * Time.fixedDeltaTime);
 		}
 	}
