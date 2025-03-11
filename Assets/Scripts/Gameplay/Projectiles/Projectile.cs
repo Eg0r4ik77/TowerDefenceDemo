@@ -14,13 +14,11 @@ namespace Gameplay.Projectiles
         
         private int _damage;
         private float _lifeTime;
-        private float _speed;
 
         private Subject<Unit> _destroyed = new();
         private float _spawnTime;
         
-        public float StartSpeed => _data.Speed;
-        public float Speed => _speed;
+        public float Speed => _data.Speed;
         public Observable<Unit> Released => _destroyed;
 
         protected abstract void Translate();
@@ -34,7 +32,6 @@ namespace Gameplay.Projectiles
         {
             _damage = _data.Damage;
             _lifeTime = _data.LifeTime;
-            _speed = _data.Speed;
         }
         
         private void Update()

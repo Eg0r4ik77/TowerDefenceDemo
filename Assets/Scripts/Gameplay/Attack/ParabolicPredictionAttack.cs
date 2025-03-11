@@ -76,7 +76,7 @@ namespace Gameplay.Attack
             const float predictionSegment = 2f;
             const float predictionStep = 0.1f;
             
-            var projectileSpeed = projectilePrefab.StartSpeed;
+            var projectileSpeed = projectilePrefab.Speed;
             var targetSpeed = target.Speed;
             
             var projectileDepartureTime = _distanceBeforeDeparture / projectileSpeed;

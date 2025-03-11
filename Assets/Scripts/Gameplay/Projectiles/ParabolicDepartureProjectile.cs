@@ -13,7 +13,7 @@ namespace Gameplay.Projectiles
 		{
 			_startPosition = transform.position;
 			
-			rigidbody.velocity = (transform.forward * Mathf.Sin(angle) - transform.up * Mathf.Cos(angle)) * StartSpeed;
+			rigidbody.velocity = (transform.forward * Mathf.Sin(angle) - transform.up * Mathf.Cos(angle)) * Speed;
 			
 			_distanceBeforeDeparture = distanceBeforeDeparture;
 		}
